@@ -3,137 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת איחוד נתוני שוק - יצירת CSV</title>
+    <title>RedPepperChut - מיזוג נתוני שוק</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Assistant', 'sans-serif'] },
+                    colors: {
+                        navy: { 700: '#1e3a8a', 800: '#1e293b', 900: '#0f172a' },
+                        pepper: { 500: '#ef4444', 600: '#dc2626' }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap');
-        body { font-family: 'Heebo', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
 
-    <div class="bg-slate-800 shadow-2xl rounded-2xl p-8 w-full max-w-lg border border-slate-700">
-        
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-white mb-2">משיכת נתוני שוק (CSV)</h1>
-            <p class="text-slate-400 text-sm">הזן סימולים להורדת קובץ נתונים היסטורי ממוזג</p>
+    <header class="bg-white border-b border-slate-200 py-8 mb-8 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-xl font-semibold text-slate-600 mb-1">ברוכים הבאים למיזוג נתונים של:</h2>
+            <h1 class="text-4xl font-black text-pepper-600 mb-2 tracking-tight">RedPepperChut inc.</h1>
+            <p class="text-lg text-slate-500 italic font-medium">the hottest pepper of the west</p>
         </div>
+    </header>
 
-        <form id="stockForm" class="space-y-5">
-            <div>
-                <label for="tickers" class="block text-sm font-medium text-slate-300 mb-1">סימולי מניות (מופרדים בפסיק)</label>
-                <input type="text" id="tickers" placeholder="לדוגמה: AAPL, TSLA, NVDA" required
-                    class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" dir="ltr">
+    <main class="max-w-4xl mx-auto px-4 pb-12">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="p-8 border-b border-slate-100">
+                <form id="stockForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">סימולי מניות (מופרדים בפסיק)</label>
+                            <input type="text" id="tickers" placeholder="לדוגמה: AAPL, TSLA, MSFT" required
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pepper-500 focus:border-pepper-500 outline-none transition-all text-left" dir="ltr">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">תאריך התחלה</label>
+                            <input type="date" id="startDate" required
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pepper-500 focus:border-pepper-500 outline-none transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">תאריך סיום</label>
+                            <input type="date" id="endDate" required
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pepper-500 focus:border-pepper-500 outline-none transition-all">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">תדירות נתונים</label>
+                            <select id="frequency" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-pepper-500 focus:border-pepper-500 outline-none transition-all">
+                                <option value="1d">Daily (יומי)</option>
+                                <option value="1wk">Weekly (שבועי)</option>
+                                <option value="1mo">Monthly (חודשי)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" 
+                        class="w-full bg-pepper-600 hover:bg-pepper-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.01] active:scale-95 flex justify-center items-center gap-3">
+                        <i class="fa-solid fa-fire text-xl"></i>
+                        <span>הפק קובץ נתונים ממוזג</span>
+                    </button>
+                </form>
             </div>
 
-            <div class="flex gap-4">
-                <div class="w-1/2">
-                    <label for="startDate" class="block text-sm font-medium text-slate-300 mb-1">תאריך התחלה</label>
-                    <input type="date" id="startDate" required
-                        class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert">
+            <div id="loadingState" class="hidden p-12 text-center">
+                <div class="inline-block mb-4">
+                    <i class="fa-solid fa-pepper-hot text-5xl text-pepper-500 spinner"></i>
                 </div>
-                <div class="w-1/2">
-                    <label for="endDate" class="block text-sm font-medium text-slate-300 mb-1">תאריך סיום</label>
-                    <input type="date" id="endDate" required
-                        class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert">
+                <h3 class="text-xl font-bold text-slate-800">מבצע מיזוג נתונים...</h3>
+                <p class="text-slate-500">אנא המתן, אנחנו מושכים נתונים מ-Yahoo וגוגל</p>
+            </div>
+
+            <div id="resultArea" class="hidden p-8 space-y-8 animate-fade-in">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
+                    <h3 class="text-xl font-bold text-emerald-800 mb-4">הקובץ מוכן!</h3>
+                    <a id="downloadBtn" href="#" target="_blank"
+                        class="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all">
+                        <i class="fa-solid fa-file-csv text-xl"></i>
+                        הורד קובץ CSV
+                    </a>
+                </div>
+
+                <div class="space-y-3">
+                    <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-slate-400"></i>
+                        תצוגה מקדימה (5 שורות ראשונות)
+                    </h4>
+                    <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                        <table class="w-full text-sm text-center border-collapse">
+                            <thead id="tableHead" class="bg-slate-50 text-slate-700 font-bold"></thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
-            <div>
-                <label for="frequency" class="block text-sm font-medium text-slate-300 mb-1">תדירות נתונים</label>
-                <select id="frequency" class="w-full bg-slate-900 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" dir="ltr">
-                    <option value="1d">Daily (יומי)</option>
-                    <option value="1wk">Weekly (שבועי)</option>
-                    <option value="1mo">Monthly (חודשי)</option>
-                </select>
-            </div>
-
-            <button type="submit" id="submitBtn" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-3 mt-4 transition-colors flex justify-center items-center gap-2">
-                <span id="btnText">הורד קובץ נתונים</span>
-                <svg id="loadingSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </button>
-        </form>
-
-        <div id="resultContainer" class="mt-6 hidden space-y-4">
-            <a id="downloadLink" href="#" target="_blank" rel="noopener noreferrer" 
-                class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg px-4 py-4 transition-all shadow-lg transform hover:-translate-y-1">
-                ⬇️ לחץ כאן להורדת קובץ ה-CSV
-            </a>
-            
-            <div id="errorMessage" class="hidden p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center"></div>
         </div>
+    </main>
 
+    <div id="errorModal" class="hidden fixed inset-0 bg-navy-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="bg-red-50 p-6 flex items-center gap-4 border-b border-red-100">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-red-800">אופס, משהו השתבש</h3>
+            </div>
+            <div class="p-6">
+                <p id="errorMessage" class="text-slate-600 leading-relaxed"></p>
+            </div>
+            <div class="p-6 pt-0">
+                <button onclick="closeErrorModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all">
+                    הבנתי, אנסה שוב
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // כתובת ה-Web App המעודכנת
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxSIhVcDUOLBf13JeltiJZA13e3KVra04liOEaxuFo0BWIsRyknMFMaMQWK6H43inTtmw/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwpx-u80GimJ5Qr4a30rbEB_swVtLhZ_xYqAf7h9EmCyr0vhaiH2sGKO0nHMKDlNzLCig/exec';
 
         const form = document.getElementById('stockForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const resultContainer = document.getElementById('resultContainer');
-        const downloadLink = document.getElementById('downloadLink');
+        const loadingState = document.getElementById('loadingState');
+        const resultArea = document.getElementById('resultArea');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const tableHead = document.getElementById('tableHead');
+        const tableBody = document.getElementById('tableBody');
+        const errorModal = document.getElementById('errorModal');
         const errorMessage = document.getElementById('errorMessage');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const tickersInput = document.getElementById('tickers').value;
-            const tickersArray = tickersInput.split(',').map(t => t.trim().toUpperCase()).filter(t => t);
             
-            const requestData = {
-                tickers: tickersArray,
+            // UI States
+            form.parentElement.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+
+            const payload = {
+                tickers: document.getElementById('tickers').value.split(',').map(t => t.trim().toUpperCase()).filter(t => t),
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
                 frequency: document.getElementById('frequency').value
             };
 
-            submitBtn.disabled = true;
-            btnText.textContent = 'מייצר קובץ CSV...';
-            loadingSpinner.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
-            errorMessage.classList.add('hidden');
-
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(requestData)
+                    body: JSON.stringify(payload)
                 });
 
-                const text = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
-                    throw new Error("שגיאה בפענוח תשובת השרת. ודא שהסקריפט מוגדר כ-Web App וגישה ל-Anyone.");
-                }
+                const result = await response.json();
 
-                if (result.status === "success" && result.downloadUrl) {
-                    downloadLink.href = result.downloadUrl;
-                    resultContainer.classList.remove('hidden');
-                    downloadLink.classList.remove('hidden');
+                if (result.status === "success") {
+                    renderPreview(result.previewData);
+                    downloadBtn.href = result.downloadUrl;
+                    loadingState.classList.add('hidden');
+                    resultArea.classList.remove('hidden');
                 } else {
-                    throw new Error(result.message || 'אירעה שגיאה בשרת.');
+                    throw new Error(result.message || "שגיאה לא ידועה בשרת");
                 }
-
-            } catch (error) {
-                console.error(error);
-                resultContainer.classList.remove('hidden');
-                downloadLink.classList.add('hidden');
-                errorMessage.classList.remove('hidden');
-                errorMessage.textContent = error.message;
-            } finally {
-                submitBtn.disabled = false;
-                btnText.textContent = 'הורד קובץ נתונים';
-                loadingSpinner.classList.add('hidden');
+            } catch (err) {
+                showError(err.message);
+                form.parentElement.classList.remove('hidden');
             }
+        });
+
+        function renderPreview(data) {
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            if (!data || data.length === 0) return;
+
+            const headerRow = document.createElement('tr');
+            data[0].forEach(h => {
+                const th = document.createElement('th');
+                th.className = 'px-6 py-4 border-b border-slate-100';
+                th.innerHTML = `<span dir="ltr">${h}</span>`;
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
+
+            data.slice(1, 6).forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, i) => {
+                    const td = document.createElement('td');
+                    td.className = 'px-6 py-4';
+                    td.innerHTML = `<span dir="ltr">${i > 0 && cell !== "" ? parseFloat(cell).toFixed(2) : cell}</span>`;
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function showError(msg) {
+            errorMessage.innerText = msg;
+            errorModal.classList.remove('hidden');
+            loadingState.classList.add('hidden');
+        }
+
+        function closeErrorModal() { 
+            errorModal.classList.add('hidden');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const yearAgo = new Date(); 
+            yearAgo.setFullYear(today.getFullYear() - 1);
+            document.getElementById('endDate').valueAsDate = today;
+            document.getElementById('startDate').valueAsDate = yearAgo;
         });
     </script>
 </body>
