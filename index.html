@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת איחוד נתוני שוק - גרסה סופית</title>
+    <title>מערכת איחוד נתוני שוק - יצירת CSV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700&display=swap');
@@ -15,8 +15,8 @@
     <div class="bg-slate-800 shadow-2xl rounded-2xl p-8 w-full max-w-lg border border-slate-700">
         
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-white mb-2">איחוד נתוני שוק</h1>
-            <p class="text-slate-400 text-sm">הפקת גיליון נתונים מאוחד עם מנגנון עקיפת חסימות</p>
+            <h1 class="text-3xl font-bold text-white mb-2">משיכת נתוני שוק (CSV)</h1>
+            <p class="text-slate-400 text-sm">הזן סימולים להורדת קובץ נתונים היסטורי ממוזג</p>
         </div>
 
         <form id="stockForm" class="space-y-5">
@@ -50,7 +50,7 @@
 
             <button type="submit" id="submitBtn" 
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-3 mt-4 transition-colors flex justify-center items-center gap-2">
-                <span id="btnText">הפק גיליון נתונים</span>
+                <span id="btnText">הורד קובץ נתונים</span>
                 <svg id="loadingSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -59,31 +59,26 @@
         </form>
 
         <div id="resultContainer" class="mt-6 hidden space-y-4">
-            <a id="sheetLink" href="#" target="_blank" rel="noopener noreferrer" 
+            <a id="downloadLink" href="#" target="_blank" rel="noopener noreferrer" 
                 class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg px-4 py-4 transition-all shadow-lg transform hover:-translate-y-1">
-                🔗 פתח את הגיליון שנוצר
+                ⬇️ לחץ כאן להורדת קובץ ה-CSV
             </a>
             
-            <div id="fallbackNotice" class="hidden p-3 bg-amber-900/40 border border-amber-600 rounded-lg text-amber-200 text-xs text-center">
-                שימו לב: חלק מהנתונים נמשכו באמצעות מנגנון הגיבוי של גוגל.
-            </div>
-
             <div id="errorMessage" class="hidden p-4 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm text-center"></div>
         </div>
 
     </div>
 
     <script>
-        // כתובת ה-Web App המעודכנת שלך
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxdyj2qEGfpaTOIlB4vSjgDvMN7Bu_uCvEw1heXR__L0H-b2Fri-AtzpIFeaQsCvVF1Lw/exec';
+        // הכתובת החדשה של השרת שלך
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwpx-u80GimJ5Qr4a30rbEB_swVtLhZ_xYqAf7h9EmCyr0vhaiH2sGKO0nHMKDlNzLCig/exec';
 
         const form = document.getElementById('stockForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const resultContainer = document.getElementById('resultContainer');
-        const sheetLink = document.getElementById('sheetLink');
-        const fallbackNotice = document.getElementById('fallbackNotice');
+        const downloadLink = document.getElementById('downloadLink');
         const errorMessage = document.getElementById('errorMessage');
 
         form.addEventListener('submit', async (e) => {
@@ -99,12 +94,10 @@
                 frequency: document.getElementById('frequency').value
             };
 
-            // הפעלת מצב טעינה ב-UI
             submitBtn.disabled = true;
-            btnText.textContent = 'מעבד נתונים...';
+            btnText.textContent = 'מייצר קובץ CSV...';
             loadingSpinner.classList.remove('hidden');
             resultContainer.classList.add('hidden');
-            fallbackNotice.classList.add('hidden');
             errorMessage.classList.add('hidden');
 
             try {
@@ -116,32 +109,29 @@
 
                 const text = await response.text();
                 let result;
-                
                 try {
                     result = JSON.parse(text);
                 } catch (e) {
-                    throw new Error("השרת החזיר תשובה שאינה JSON: " + text);
+                    throw new Error("שגיאה בפענוח תשובת השרת.");
                 }
 
-                if (result.status === "success") {
-                    sheetLink.href = result.sheetUrl;
+                if (result.status === "success" && result.downloadUrl) {
+                    downloadLink.href = result.downloadUrl;
                     resultContainer.classList.remove('hidden');
-                    
-                    if (result.notes && result.notes.includes('fallback')) {
-                        fallbackNotice.classList.remove('hidden');
-                    }
+                    downloadLink.classList.remove('hidden');
                 } else {
-                    throw new Error(result.message || 'שגיאה לא ידועה בשרת');
+                    throw new Error(result.message || 'אירעה שגיאה בשרת.');
                 }
 
             } catch (error) {
                 console.error(error);
                 resultContainer.classList.remove('hidden');
+                downloadLink.classList.add('hidden');
                 errorMessage.classList.remove('hidden');
                 errorMessage.textContent = error.message;
             } finally {
                 submitBtn.disabled = false;
-                btnText.textContent = 'הפק גיליון נתונים';
+                btnText.textContent = 'הורד קובץ נתונים';
                 loadingSpinner.classList.add('hidden');
             }
         });
